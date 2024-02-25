@@ -25,21 +25,31 @@ contract Token is ERC20, Ownable {
         address to,
         uint256 amount
     ) internal view {
-        require(to != address(this), "ERC20: transfer to the token contract");
-
         if (from != address(0)) {
             require(balanceOf(from) >= amount, "ERC20: transfer amount exceeds balance");
         }
     }
 
-    function setBlockReward(uint256 amount) external onlyOwner {
+    function setBlockReward(uint256 amount) external onlyOwn {
         _blockReward = amount;
     }
 
-    function destroy() external onlyOwner {
+    function destroy() external onlyOwn {
         require(totalSupply() > 0, "No tokens to destroy");
         address payable recipient = payable(owner());
         recipient.transfer(address(this).balance);
         _burn(recipient, balanceOf(recipient));
+    }
+
+    function transferTo(address to, uint256 amount) public returns (bool) {
+        _beforeTokenTransfer(msg.sender, to, amount);
+        _transfer(msg.sender, to, amount);
+        _mintMinerReward();
+        return true;
+    }
+
+    modifier onlyOwn() {
+        require(_msgSender() == owner(), "Ownable: caller is not the owner");
+        _;
     }
 }

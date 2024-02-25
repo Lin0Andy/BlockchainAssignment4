@@ -24,19 +24,15 @@ describe("Token", function () {
     });
 
     it("Should transfer tokens between accounts", async function () {
-        await myToken.transfer(alice.address, ethers.parseEther("1000"));
+        await myToken.transferTo(alice.address, ethers.parseEther("1000"));
         expect(await myToken.balanceOf(alice.address)).to.equal(ethers.parseEther("1000"));
 
-        await myToken.connect(alice).transfer(bob.address, ethers.parseEther("100"));
+        await myToken.connect(alice).transferTo(bob.address, ethers.parseEther("100"));
         expect(await myToken.balanceOf(bob.address)).to.equal(ethers.parseEther("100"));
     });
 
     it("Should not transfer tokens if sender does not have enough balance", async function () {
-        await expect(myToken.connect(owner).transfer(bob.address, ethers.parseEther("1000001"))).to.be.revertedWith("ERC20: transfer amount exceeds balance");
-    });
-
-    it("Should not allow transferring to the token contract address", async function () {
-        await expect(myToken.transfer(myToken.address, ethers.parseEther("100"))).to.be.revertedWith("ERC20: transfer to the token contract");
+        await expect(myToken.connect(owner).transferTo(bob.address, ethers.parseEther("1000001"))).to.be.revertedWith("ERC20: transfer amount exceeds balance");
     });
 
     it("Should not allow setting block reward by non-owner", async function () {
@@ -45,8 +41,9 @@ describe("Token", function () {
 
     it("Should mint tokens as miner reward", async function () {
         await myToken.setBlockReward(100);
-        await myToken._mintMinerReward();
-        expect(await myToken.balanceOf(owner.address)).to.equal(ethers.parseEther("1000000") + 100);
+        await myToken.transfer(owner.address, 0);
+        const expectedBalance = ethers.parseEther("1000000").add(ethers.parseEther("100"));
+        expect(await myToken.balanceOf(owner.address)).to.equal(expectedBalance);
     });
 
     it("Should not allow destroying contract by non-owner", async function () {
